@@ -36,7 +36,7 @@ pub fn install_from_source(url: Uri, flavor: Flavor) -> Result<()> {
         let fingerprint_cache = Arc::new(Mutex::new(load_fingerprint_cache().await?));
 
         // Fetch the remote repo metadata
-        let mut repo_package = RepositoryPackage::from_source_url(Flavor::Retail, url)?;
+        let mut repo_package = RepositoryPackage::from_source_url(flavor, url)?;
         repo_package.resolve_metadata().await?;
 
         // Build an addon using this repo package

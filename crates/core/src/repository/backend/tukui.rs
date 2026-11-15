@@ -60,7 +60,8 @@ impl Backend for Tukui {
             | Flavor::ClassicPtr
             | Flavor::ClassicBeta
             | Flavor::ClassicEra
-            | Flavor::ClassicEraPtr => {}
+            | Flavor::ClassicEraPtr
+            | Flavor::Forever => {}
         }
 
         Ok(None)
@@ -119,6 +120,7 @@ fn format_flavor(flavor: &Flavor) -> String {
         Flavor::Retail => "retail".to_owned(),
         Flavor::ClassicTbc => "tbc".to_owned(),
         Flavor::ClassicEra => "classic".to_owned(),
+        Flavor::Forever => "forever".to_owned(),
         _ => panic!("Unknown base flavor {}", base_flavor),
     }
 }
@@ -147,6 +149,7 @@ fn changelog_endpoint(id: &str, flavor: &Flavor) -> String {
             "https://www.tukui.org/classic-tbc-addons.php?id={}&changelog",
             id
         ),
+        Flavor::Forever => format!("https://www.tukui.org/addons.php?id={}&changelog", id),
     }
 }
 

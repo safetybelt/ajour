@@ -53,10 +53,12 @@ pub enum Flavor {
     #[serde(alias = "ClassicPTR")]
     ClassicPtr,
     ClassicBeta,
+    #[serde(alias = "forever", alias = "wow_forever")]
+    Forever,
 }
 
 impl Flavor {
-    pub const ALL: [Flavor; 8] = [
+    pub const ALL: [Flavor; 9] = [
         Flavor::Retail,
         Flavor::RetailPtr,
         Flavor::RetailBeta,
@@ -65,6 +67,7 @@ impl Flavor {
         Flavor::ClassicTbc,
         Flavor::ClassicPtr,
         Flavor::ClassicBeta,
+        Flavor::Forever,
     ];
 
     /// Returns flavor `String` in CurseForge format
@@ -75,6 +78,7 @@ impl Flavor {
                 "wow_burning_crusade".to_owned()
             }
             Flavor::ClassicEra | Flavor::ClassicEraPtr => "wow_classic".to_owned(),
+            Flavor::Forever => "wow_forever".to_owned(),
         }
     }
 
@@ -86,6 +90,7 @@ impl Flavor {
                 "burningCrusade".to_owned()
             }
             Flavor::ClassicEra | Flavor::ClassicEraPtr => "classic".to_owned(),
+            Flavor::Forever => "forever".to_owned(),
         }
     }
 
@@ -95,6 +100,7 @@ impl Flavor {
             Flavor::Retail | Flavor::RetailPtr | Flavor::RetailBeta => Flavor::Retail,
             Flavor::ClassicTbc | Flavor::ClassicPtr | Flavor::ClassicBeta => Flavor::ClassicTbc,
             Flavor::ClassicEra | Flavor::ClassicEraPtr => Flavor::ClassicEra,
+            Flavor::Forever => Flavor::Forever,
         }
     }
 
@@ -109,6 +115,7 @@ impl Flavor {
             Flavor::ClassicTbc => "_classic_".to_owned(),
             Flavor::ClassicPtr => "_classic_ptr_".to_owned(),
             Flavor::ClassicBeta => "_classic_beta_".to_owned(),
+            Flavor::Forever => "_forever_".to_owned(),
         }
     }
 }
@@ -133,7 +140,32 @@ impl std::fmt::Display for Flavor {
                 Flavor::ClassicTbc => "Classic TBC",
                 Flavor::ClassicBeta => "Classic Beta",
                 Flavor::ClassicPtr => "Classic PTR",
+                Flavor::Forever => "Forever",
             }
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn forever_has_its_own_flavor_and_folder() {
+        assert_eq!(Flavor::Forever.base_flavor(), Flavor::Forever);
+        assert_eq!(Flavor::Forever.folder_name(), "_forever_");
+        assert_eq!(Flavor::Forever.to_string(), "Forever");
+    }
+
+    #[test]
+    fn forever_deserializes_from_config_aliases() {
+        assert_eq!(
+            serde_json::from_str::<Flavor>(r#""forever""#).unwrap(),
+            Flavor::Forever
+        );
+        assert_eq!(
+            serde_json::from_str::<Flavor>(r#""wow_forever""#).unwrap(),
+            Flavor::Forever
+        );
     }
 }

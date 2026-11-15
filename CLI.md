@@ -68,7 +68,7 @@ OPTIONS:
     # Space separated list of flavors to include in backup.
     # If ommited, all flavors will be included
     # [possible values: retail, ptr, beta, classic_era, classic_era_ptr, classic,
-    # classic_ptr, classic_beta]
+    # classic_ptr, classic_beta, forever]
 
     -f, --flavors <flavors>
 
@@ -113,7 +113,7 @@ USAGE:
 ARGS:
     # Flavor to install addon under
     # [possible values: retail, ptr, beta, classic_era, classic_era_ptr, classic,
-    # classic_ptr, classic_beta]
+    # classic_ptr, classic_beta, forever]
 
     <flavor>
 
@@ -129,6 +129,10 @@ ARGS:
 # Install Hekili from Github
 
 ajour install retail https://github.com/Hekili/hekili
+
+# Install a Forever addon from GitHub
+
+ajour install forever https://github.com/owner/addon
 ```
 
 ### Update
@@ -173,7 +177,7 @@ ARGS:
 
     # Flavor to use from the path. If none, we use all we find
     # [possible values: retail, ptr, beta, classic_era, classic_era_ptr, classic,
-    #classic_ptr, classic_beta]
+    # classic_ptr, classic_beta, forever]
 
     [flavor]
 ```
@@ -184,6 +188,10 @@ ARGS:
 # Add retail from ./World of Warcraft
 
 ajour path-add ./World of Warcraft retail
+
+# Add Forever from ./World of Warcraft
+
+ajour path-add ./World of Warcraft forever
 
 # Add all known flavors from ./World of Warcraft
 

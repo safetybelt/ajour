@@ -279,6 +279,7 @@ async fn parse_addon_folders(
                         Flavor::Retail => vec!["Mainline"],
                         Flavor::ClassicEra => vec!["Classic", "Vanilla"],
                         Flavor::ClassicTbc => vec!["BCC", "TBC"],
+                        Flavor::Forever => vec!["Forever"],
                         _ => vec![],
                     };
 
@@ -397,9 +398,28 @@ async fn get_curse_fingerprint_info(
         fingerprint_hashes.len()
     );
 
+    // Fingerprint matching is only used to identify unmanaged CurseForge addons.
+    // Do not make the entire addon list depend on this optional remote service.
+    if fingerprint_hashes.is_empty() {
+        return Ok(curse::FingerprintInfo::default());
+    }
+
     // Fetches fingerprint package from curse_api
-    let mut fingerprint_info =
-        curse::fetch_remote_packages_by_fingerprint(&fingerprint_hashes).await?;
+    let mut fingerprint_info = match curse::fetch_remote_packages_by_fingerprint(
+        &fingerprint_hashes,
+    )
+    .await
+    {
+        Ok(fingerprint_info) => fingerprint_info,
+        Err(error) => {
+            log::warn!(
+                    "{} - CurseForge fingerprint lookup failed: {}. Continuing without fingerprint matches",
+                    flavor,
+                    error
+                );
+            return Ok(curse::FingerprintInfo::default());
+        }
+    };
 
     // We had a case where a addon hash returned a minecraft addon.
     // So we filter out all matches which does not have a valid flavor.
@@ -1053,7 +1073,7 @@ static RE_PARSING_PATTERNS: Lazy<ParsingPatterns> = Lazy::new(|| {
     ParsingPatterns {
         extra_inclusion_regex: Regex::new(r#"(?i)^[^/\\]+[/\\]Bindings\.xml$"#).unwrap(),
         initial_inclusion_regex: Regex::new(
-            r#"(?i)^([^/\\]+)[/\\]\1([-|_](mainline|bcc|tbc|classic|vanilla))?\.toc$"#,
+            r#"(?i)^([^/\\]+)[/\\]\1([-|_](mainline|bcc|tbc|classic|vanilla|forever))?\.toc$"#,
         )
         .unwrap(),
         file_parsing_regex,
@@ -1163,6 +1183,16 @@ fn split_dependencies_into_vec(value: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn empty_fingerprint_lookup_does_not_call_remote_service() {
+        let fingerprint_info =
+            async_std::task::block_on(get_curse_fingerprint_info(Flavor::Forever, &[], &[]))
+                .unwrap();
+
+        assert!(fingerprint_info.exact_matches.is_empty());
+        assert!(fingerprint_info.partial_matches.is_empty());
+    }
 
     #[test]
     fn test_toc_title() {

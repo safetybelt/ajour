@@ -211,10 +211,11 @@ fn extract_binary_from_tar(
 pub fn wow_path_resolution(path: Option<PathBuf>) -> Option<PathBuf> {
     if let Some(path) = path {
         // Known folders in World of Warcraft dir
-        let known_folders = Flavor::ALL
+        let mut known_folders = Flavor::ALL
             .iter()
             .map(|f| f.folder_name())
             .collect::<Vec<String>>();
+        known_folders.push("forever".to_owned());
 
         // If chosen path has any of the known Wow folders, we have the right one.
         for folder in known_folders.iter() {
@@ -327,6 +328,9 @@ mod tests {
         let classic_interface_path =
             PathBuf::from(r"/Applications/World of Warcraft/_classic_/Interface");
         let classic_alternate_path = PathBuf::from(r"/Applications/Wow/_classic_");
+        let forever_addon_path =
+            PathBuf::from(r"/Applications/World of Warcraft/_forever_/Interface/AddOns");
+        let unwrapped_forever_path = PathBuf::from(r"/Applications/Wow/forever/Interface/AddOns");
 
         let root_alternate_path = PathBuf::from(r"/Applications/Wow");
         let root_path = PathBuf::from(r"/Applications/World of Warcraft");
@@ -335,6 +339,10 @@ mod tests {
         assert!(root_path.eq(&wow_path_resolution(Some(retail_addon_path)).unwrap()),);
         assert!(root_path.eq(&wow_path_resolution(Some(retail_interface_path)).unwrap()),);
         assert!(root_path.eq(&wow_path_resolution(Some(classic_interface_path)).unwrap()),);
+        assert!(root_path.eq(&wow_path_resolution(Some(forever_addon_path)).unwrap()),);
+        assert!(
+            root_alternate_path.eq(&wow_path_resolution(Some(unwrapped_forever_path)).unwrap()),
+        );
         assert!(
             root_alternate_path.eq(&wow_path_resolution(Some(classic_alternate_path)).unwrap()),
         );

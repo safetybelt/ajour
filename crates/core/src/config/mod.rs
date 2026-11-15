@@ -116,7 +116,18 @@ impl Config {
 
     /// Returns a `PathBuf` to the flavor directory.
     pub fn get_flavor_directory_for_flavor(&self, flavor: &Flavor, path: &Path) -> PathBuf {
-        path.join(&flavor.folder_name())
+        let flavor_path = path.join(&flavor.folder_name());
+
+        // The Battle.net client uses `_forever_`, but also accept an unwrapped
+        // `forever` directory when a custom installation uses that name.
+        if *flavor == Flavor::Forever && !flavor_path.exists() {
+            let alternate_path = path.join("forever");
+            if alternate_path.exists() {
+                return alternate_path;
+            }
+        }
+
+        flavor_path
     }
 
     /// Returns a `Option<PathBuf>` to the root directory of the Flavor.
@@ -429,6 +440,36 @@ mod test {
         assert_eq!(
             get_pattern_format("ScreeNShots"),
             String::from("?creenshots")
+        );
+    }
+
+    #[test]
+    fn test_discovers_forever_directory() {
+        let wow_root = tempfile::tempdir().unwrap();
+        let forever_path = wow_root.path().join("_forever_");
+        std::fs::create_dir(&forever_path).unwrap();
+
+        let mut config = Config::default();
+        config.add_wow_directories(wow_root.path().to_path_buf(), None);
+
+        assert_eq!(
+            config.wow.directories.get(&Flavor::Forever),
+            Some(&forever_path)
+        );
+    }
+
+    #[test]
+    fn test_discovers_unwrapped_forever_directory() {
+        let wow_root = tempfile::tempdir().unwrap();
+        let forever_path = wow_root.path().join("forever");
+        std::fs::create_dir(&forever_path).unwrap();
+
+        let mut config = Config::default();
+        config.add_wow_directories(wow_root.path().to_path_buf(), None);
+
+        assert_eq!(
+            config.wow.directories.get(&Flavor::Forever),
+            Some(&forever_path)
         );
     }
 }

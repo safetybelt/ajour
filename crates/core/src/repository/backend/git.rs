@@ -261,7 +261,44 @@ mod github {
     /// Eg:
     /// `foobar-classic` => ClassicEra file.
     /// `foobar-bcc` => ClassicTbc file.
+    /// `foobar-forever` => Forever file.
     fn find_asset_fallback(release: &Release, flavor: Flavor) -> Option<&ReleaseAsset> {
+        if flavor.base_flavor() == Flavor::Forever {
+            let forever_asset = release.assets.iter().find(|a| {
+                a.name.to_lowercase().ends_with("zip") && a.name.to_lowercase().contains("forever")
+            });
+
+            if forever_asset.is_some() {
+                return forever_asset;
+            }
+
+            let generic_asset = release.assets.iter().find(|a| {
+                let name = a.name.to_lowercase();
+                name.ends_with("zip")
+                    && !name.contains("retail")
+                    && !name.contains("mainline")
+                    && !name.contains("classic")
+                    && !name.contains("vanilla")
+                    && !name.contains("bcc")
+                    && !name.contains("tbc")
+            });
+
+            if generic_asset.is_some() {
+                return generic_asset;
+            }
+
+            let mut zip_assets = release
+                .assets
+                .iter()
+                .filter(|a| a.name.to_lowercase().ends_with("zip"));
+            let only_zip = zip_assets.next();
+            return if zip_assets.next().is_none() {
+                only_zip
+            } else {
+                None
+            };
+        }
+
         let asset = release.assets.iter().find(|a| match flavor.base_flavor() {
             Flavor::Retail => {
                 a.name.ends_with("zip")
@@ -336,6 +373,46 @@ mod github {
         pub name: String,
         pub browser_download_url: String,
     }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        fn release_with_assets(names: &[&str]) -> Release {
+            Release {
+                tag_name: "1.0.0".to_owned(),
+                published_at: Utc::now(),
+                prerelease: false,
+                html_url: "https://github.com/owner/addon/releases/tag/1.0.0".to_owned(),
+                body: String::new(),
+                assets: names
+                    .iter()
+                    .map(|name| ReleaseAsset {
+                        name: (*name).to_owned(),
+                        browser_download_url: format!("https://example.com/{}", name),
+                    })
+                    .collect(),
+            }
+        }
+
+        #[test]
+        fn forever_prefers_a_forever_release_asset() {
+            let release = release_with_assets(&["Addon-Retail.zip", "Addon-Forever.zip"]);
+
+            let asset = find_asset_fallback(&release, Flavor::Forever).unwrap();
+
+            assert_eq!(asset.name, "Addon-Forever.zip");
+        }
+
+        #[test]
+        fn forever_accepts_a_generic_release_asset() {
+            let release = release_with_assets(&["Addon-1.0.0.zip"]);
+
+            let asset = find_asset_fallback(&release, Flavor::Forever).unwrap();
+
+            assert_eq!(asset.name, "Addon-1.0.0.zip");
+        }
+    }
 }
 
 mod gitlab {
@@ -401,7 +478,45 @@ mod gitlab {
     /// Eg:
     /// `foobar-classic` => ClassicEra file.
     /// `foobar-bcc` => ClassicTbc file.
+    /// `foobar-forever` => Forever file.
     fn find_asset_fallback(release: &Release, flavor: Flavor) -> Option<&ReleaseLink> {
+        if flavor.base_flavor() == Flavor::Forever {
+            let forever_asset = release.assets.links.iter().find(|a| {
+                a.name.to_lowercase().ends_with("zip") && a.name.to_lowercase().contains("forever")
+            });
+
+            if forever_asset.is_some() {
+                return forever_asset;
+            }
+
+            let generic_asset = release.assets.links.iter().find(|a| {
+                let name = a.name.to_lowercase();
+                name.ends_with("zip")
+                    && !name.contains("retail")
+                    && !name.contains("mainline")
+                    && !name.contains("classic")
+                    && !name.contains("vanilla")
+                    && !name.contains("bcc")
+                    && !name.contains("tbc")
+            });
+
+            if generic_asset.is_some() {
+                return generic_asset;
+            }
+
+            let mut zip_assets = release
+                .assets
+                .links
+                .iter()
+                .filter(|a| a.name.to_lowercase().ends_with("zip"));
+            let only_zip = zip_assets.next();
+            return if zip_assets.next().is_none() {
+                only_zip
+            } else {
+                None
+            };
+        }
+
         let asset = release
             .assets
             .links
